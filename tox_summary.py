@@ -6,7 +6,7 @@
 # Usage: see README
 #
 # Copyright Federico Ceratto <federico.ceratto@gmail.com>
-# Released under GPLv3
+# Released under AGPLv3
 
 from glob import glob
 import xmltodict
