@@ -11,6 +11,9 @@
 from argparse import ArgumentParser
 from collections import namedtuple
 from glob import glob
+import os
+import subprocess
+import sys
 import xmltodict
 
 RESULT_GLOB = './.tox/*/log/result.xml'
@@ -51,14 +54,32 @@ def extract_tests(fn):
 
 
 def parse_args():
+
     ap = ArgumentParser()
     ap.add_argument('-a', '--print-all', action='store_true',
                     help="Print all tests")
-    return ap.parse_args()
+    ap.add_argument('--', help="Run Tox. Any parameter after '--' will be passed to Tox", dest='_', action='store_true')
+
+    if '--' in sys.argv:
+        i = sys.argv.index('--')
+        myargs = sys.argv[1:i]
+        args = ap.parse_args(myargs)
+        args.run_tox = '/usr/bin/tox ' + ' '.join(sys.argv[i+1:])
+    else:
+        args = ap.parse_args()
+        args.run_tox = None
+
+    return args
 
 
 def main():
     args = parse_args()
+
+    if args.run_tox:
+        for fn in glob(RESULT_GLOB):
+            os.unlink(fn)
+        status = subprocess.call(args.run_tox, shell=True)
+
 
     tests_to_be_printed = set()
     env_tests = {}
