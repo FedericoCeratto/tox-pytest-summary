@@ -14,6 +14,7 @@ from glob import glob
 import os
 import subprocess
 import sys
+import time
 import xmltodict
 
 RESULT_GLOB = './.tox/*/log/result.xml'
@@ -78,7 +79,9 @@ def main():
     if args.run_tox:
         for fn in glob(RESULT_GLOB):
             os.unlink(fn)
+        t0 = time.time()
         status = subprocess.call(args.run_tox, shell=True)
+        elapsed = time.time() - t0
 
 
     tests_to_be_printed = set()
@@ -95,12 +98,20 @@ def main():
             tests_to_be_printed |= results.failed
 
     if not tests_to_be_printed:
-        print "No tests found." if args.print_all else "No failures."
+        line = "No tests found." if args.print_all else "No failures."
+        print(line)
         return
 
-    print
-    print ' '.join(sorted(env_tests))
-    print
+    stats = []
+    for n in sorted(env_tests):
+        results = env_tests[n]
+        s = "%d/%d/%d" % (len(results.failed), len(results.skipped), len(results.all))
+        stats.append(s)
+
+    print('')
+    print(' '.join(sorted(env_tests)))
+    print(' '.join(stats))
+    print('')
 
     for test in sorted(tests_to_be_printed):
         line = u"%s %s" % test
@@ -123,7 +134,11 @@ def main():
             line += Colors.WARNING + SYMBOL
 
         line += Colors.ENDC
-        print line
+        print(line.encode('utf-8'))
+
+    if args.run_tox:
+        print('')
+        print("Elapsed: %.3fs" % elapsed)
 
 if __name__ == '__main__':
     main()
